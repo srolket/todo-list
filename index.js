@@ -52,7 +52,10 @@ class Component {
 class TodoList extends Component {
   constructor() {
     super();
-    this.state = {
+
+    const saved = localStorage.getItem("todos");
+
+    this.state = saved ? JSON.parse(saved) : {
       todos: [
         {title: "Сделать домашку", completed: false},
         {title: "Сделать практику", completed: false},
@@ -60,11 +63,17 @@ class TodoList extends Component {
       ],
       input: "",
     };
+
     this.onAddTask = this.onAddTask.bind(this);
     this.onAddInputChange = this.onAddInputChange.bind(this);
     this.onCompleteTask = this.onCompleteTask.bind(this);
     this.onDeleteTask = this.onDeleteTask.bind(this);
   }
+
+  saveState() {
+    localStorage.setItem("todos", JSON.stringify(this.state));
+  }
+
 
   render() {
     return createElement("div", {class: "todo-list"}, [
@@ -83,6 +92,7 @@ class TodoList extends Component {
 
   onAddTask() {
     this.state.todos = [...this.state.todos, {title: this.state.input, completed: false}];
+    this.saveState();
     this.update()
   }
 
@@ -92,11 +102,13 @@ class TodoList extends Component {
 
   onCompleteTask(index, e) {
     this.state.todos[index].completed = e.target.checked;
+    this.saveState();
     this.update();
   }
 
   onDeleteTask(index) {
     this.state.todos = this.state.todos.filter((_, i) => i !== index);
+    this.saveState();
     this.update();
   }
 }
