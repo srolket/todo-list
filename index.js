@@ -8,7 +8,11 @@
 
   if (attributes) {
     Object.keys(attributes).forEach((key) => {
-      element.setAttribute(key, attributes[key]);
+      if (key === "checked") {
+        element.checked = attributes[key];
+      } else {
+        element.setAttribute(key, attributes[key]);
+      }
     });
   }
 
@@ -50,14 +54,16 @@ class TodoList extends Component {
     super();
     this.state = {
       todos: [
-        "Сделать домашку",
-        "Сделать практику",
-        "Пойти домой",
+        {title: "Сделать домашку", completed: false },
+        {title: "Сделать практику", completed: false },
+        {title: "Пойти домой", completed: false },
       ],
       input: "",
     };
     this.onAddTask = this.onAddTask.bind(this);
     this.onAddInputChange = this.onAddInputChange.bind(this);
+    this.onCompleteTask = this.onCompleteTask.bind(this);
+    this.onDeleteTask = this.onDeleteTask.bind(this);
   }
 
   render() {
@@ -76,11 +82,18 @@ class TodoList extends Component {
       createElement(
           "ul",
           { id: "todos" },
-          this.state.todos.map((todo) =>
+          this.state.todos.map((todo, index) =>
             createElement("li", {}, [
-              createElement("input", { type: "checkbox" }),
-              createElement("label", {}, todo),
-              createElement("button", {}, "🗑️")
+              createElement("input", { type: "checkbox" , checked: todo.completed}, null, {change: (e) => this.onCompleteTask(index, e)}),
+              createElement("label", {style: todo.completed ? "color: gray;" : "",}, todo.title),
+              createElement(
+                  "button",
+                  {},
+                  "🗑️",
+                  {
+                    click: () => this.onDeleteTask(index),
+                  }
+              ),
             ])
           )
       ),
@@ -89,13 +102,22 @@ class TodoList extends Component {
 
 
   onAddTask() {
-    this.state.todos = [...this.state.todos, this.state.input];
+    this.state.todos = [...this.state.todos, {title: this.state.input, completed: false}];
     this.update()
   }
 
   onAddInputChange(e) {
     this.state.input = e.target.value;
+  }
 
+  onCompleteTask(index, e) {
+    this.state.todos[index].completed = e.target.checked;
+    this.update();
+  }
+
+  onDeleteTask(index) {
+    this.state.todos = this.state.todos.filter((_, i) => i !== index);
+    this.update();
   }
 }
 
