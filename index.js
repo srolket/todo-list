@@ -74,21 +74,7 @@ class TodoList extends Component {
           "ul",
           {id: "todos"},
           this.state.todos.map((todo, index) =>
-              createElement("li", {}, [
-                createElement("input", {
-                  type: "checkbox",
-                  checked: todo.completed
-                }, null, {change: (e) => this.onCompleteTask(index, e)}),
-                createElement("label", {style: todo.completed ? "color: gray;" : "",}, todo.title),
-                createElement(
-                    "button",
-                    {},
-                    "🗑️",
-                    {
-                      click: () => this.onDeleteTask(index),
-                    }
-                ),
-              ])
+              new Task(todo, index, this.onDeleteTask, this.onCompleteTask).render()
           )
       ),
     ])
