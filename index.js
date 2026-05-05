@@ -37,10 +37,10 @@ class Component {
   constructor() {
   }
 
-  getDomNode() {
-    this._domNode = this.render();
-    return this._domNode;
-  }
+    getDomNode() {
+        this._domNode = this.render();
+        return this._domNode;
+    }
 
   update() {
     const newNode = this.render();
@@ -68,30 +68,43 @@ class TodoList extends Component {
     this.onAddInputChange = this.onAddInputChange.bind(this);
     this.onCompleteTask = this.onCompleteTask.bind(this);
     this.onDeleteTask = this.onDeleteTask.bind(this);
+    this.taskComponents = [];
   }
 
   saveState() {
     localStorage.setItem("todos", JSON.stringify(this.state));
   }
 
+    render() {
+        this.state.todos.forEach((todo, index) => {
+            if (!this.taskComponents[index]) {
+                this.taskComponents[index] = new Task(
+                    todo,
+                    index,
+                    this.onDeleteTask,
+                    this.onCompleteTask
+                );
+            }
 
-  render() {
-    return createElement("div", {class: "todo-list"}, [
-      createElement("h1", {}, "TODO List"),
-      new AddTask(this.onAddTask, this.onAddInputChange).render(),
-      createElement(
-          "ul",
-          {id: "todos"},
-          this.state.todos.map((todo, index) =>
-              new Task(todo, index, this.onDeleteTask, this.onCompleteTask).render()
-          )
-      ),
-    ])
-  }
+            const comp = this.taskComponents[index];
+            comp.todo = todo;
+            comp.index = index;
+        });
 
+        return createElement("div", {class: "todo-list"}, [
+            createElement("h1", {}, "TODO List"),
+            new AddTask(this.onAddTask, this.onAddInputChange).getDomNode(),
+            createElement(
+                "ul",
+                { id: "todos" },
+                this.taskComponents.map((comp) => comp.getDomNode())
+            ),
+        ])
+    }
 
   onAddTask() {
     this.state.todos = [...this.state.todos, {title: this.state.input, completed: false}];
+    this.state.input = "";
     this.saveState();
     this.update()
   }
@@ -106,11 +119,12 @@ class TodoList extends Component {
     this.update();
   }
 
-  onDeleteTask(index) {
-    this.state.todos = this.state.todos.filter((_, i) => i !== index);
-    this.saveState();
-    this.update();
-  }
+    onDeleteTask(index) {
+        this.state.todos = this.state.todos.filter((_, i) => i !== index);
+        this.taskComponents.splice(index, 1);
+        this.saveState();
+        this.update();
+    }
 }
 
 class AddTask extends Component {
@@ -136,10 +150,14 @@ class AddTask extends Component {
 class Task extends Component {
   constructor(todo, index, onDeleteTask, onCompleteTask) {
     super();
+    this.state = {
+      confirmDelete: false
+    }
     this.todo = todo;
     this.index = index;
     this.onDeleteTask = onDeleteTask;
     this.onCompleteTask = onCompleteTask;
+    this.onDeleteClick = this.onDeleteClick.bind(this);
   }
 
   render() {
@@ -149,16 +167,18 @@ class Task extends Component {
         checked: this.todo.completed
       }, null, {change: (e) => this.onCompleteTask(this.index, e)}),
       createElement("label", {style: this.todo.completed ? "color: gray;" : "",}, this.todo.title),
-      createElement(
-          "button",
-          {},
-          "🗑️",
-          {
-            click: () => this.onDeleteTask(this.index),
-          }
-      ),
+      createElement("button", {style: this.state.confirmDelete ? "background: red;" : ""}, "🗑️", {click: this.onDeleteClick}),
     ]);
   }
+
+    onDeleteClick() {
+        if (!this.state.confirmDelete) {
+            this.state.confirmDelete = true;
+            this.update();
+        } else {
+            this.onDeleteTask(this.index);
+        }
+    }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
