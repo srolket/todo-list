@@ -8,7 +8,11 @@
 
   if (attributes) {
     Object.keys(attributes).forEach((key) => {
-      element.setAttribute(key, attributes[key]);
+      if (key === "checked") {
+        element.checked = attributes[key];
+      } else {
+        element.setAttribute(key, attributes[key]);
+      }
     });
   }
 
@@ -50,29 +54,41 @@ class TodoList extends Component {
     super();
     this.state = {
       todos: [
-        "Сделать домашку",
-        "Сделать практику",
-        "Пойти домой",
+        {title: "Сделать домашку", completed: false},
+        {title: "Сделать практику", completed: false},
+        {title: "Пойти домой", completed: false},
       ],
       input: "",
     };
     this.onAddTask = this.onAddTask.bind(this);
     this.onAddInputChange = this.onAddInputChange.bind(this);
+    this.onCompleteTask = this.onCompleteTask.bind(this);
+    this.onDeleteTask = this.onDeleteTask.bind(this);
   }
 
   render() {
-    return createElement("div", { class: "todo-list" }, [
+    return createElement("div", {class: "todo-list"}, [
       createElement("h1", {}, "TODO List"),
       new AddTask(this.onAddTask, this.onAddInputChange).render(),
       createElement(
           "ul",
-          { id: "todos" },
-          this.state.todos.map((todo) =>
-            createElement("li", {}, [
-              createElement("input", { type: "checkbox" }),
-              createElement("label", {}, todo),
-              createElement("button", {}, "🗑️")
-            ])
+          {id: "todos"},
+          this.state.todos.map((todo, index) =>
+              createElement("li", {}, [
+                createElement("input", {
+                  type: "checkbox",
+                  checked: todo.completed
+                }, null, {change: (e) => this.onCompleteTask(index, e)}),
+                createElement("label", {style: todo.completed ? "color: gray;" : "",}, todo.title),
+                createElement(
+                    "button",
+                    {},
+                    "🗑️",
+                    {
+                      click: () => this.onDeleteTask(index),
+                    }
+                ),
+              ])
           )
       ),
     ])
@@ -80,12 +96,22 @@ class TodoList extends Component {
 
 
   onAddTask() {
-    this.state.todos = [...this.state.todos, this.state.input];
+    this.state.todos = [...this.state.todos, {title: this.state.input, completed: false}];
     this.update()
   }
 
   onAddInputChange(e) {
     this.state.input = e.target.value;
+  }
+
+  onCompleteTask(index, e) {
+    this.state.todos[index].completed = e.target.checked;
+    this.update();
+  }
+
+  onDeleteTask(index) {
+    this.state.todos = this.state.todos.filter((_, i) => i !== index);
+    this.update();
   }
 }
 
@@ -110,14 +136,30 @@ class AddTask extends Component {
 }
 
 class Task extends Component {
-  constructor(onDeleteTask, onCompleteTask) {
+  constructor(todo, index, onDeleteTask, onCompleteTask) {
     super();
+    this.todo = todo;
+    this.index = index;
     this.onDeleteTask = onDeleteTask;
     this.onCompleteTask = onCompleteTask;
   }
 
   render() {
-    return
+    return createElement("li", {}, [
+      createElement("input", {
+        type: "checkbox",
+        checked: this.todo.completed
+      }, null, {change: (e) => this.onCompleteTask(this.index, e)}),
+      createElement("label", {style: this.todo.completed ? "color: gray;" : "",}, this.todo.title),
+      createElement(
+          "button",
+          {},
+          "🗑️",
+          {
+            click: () => this.onDeleteTask(this.index),
+          }
+      ),
+    ]);
   }
 }
 
